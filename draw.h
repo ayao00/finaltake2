@@ -6,6 +6,11 @@
 #include "ml6.h"
 #include "symtab.h"
 
+//mesh organization
+void add_mesh( struct matrix * polygons, char * filename );
+void trim(char * input);
+char ** parse_args( char * line , char * separator);
+
 void draw_scanline(int x0, double z0, int x1, double z1, int y, screen s, zbuffer zb, color c);
 void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color il );
 
