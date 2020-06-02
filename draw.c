@@ -224,13 +224,14 @@ void draw_polygons( struct matrix *polygons, screen s, zbuffer zb,
     }
   }
 }
-void add_mesh( struct matrix * polygons, char * filename ){
+/*void add_mesh( struct matrix * polygons, char * filename ){
   FILE *file;
   file = fopen(filename, "r");
   char line[255];
-  char *curr = malloc(strlen(line));
+  char *curr = malloc(256);
   double x,y,z;
   char **separated;
+
   struct matrix * vertices = new_matrix(4,4);
 
   if(file == NULL){
@@ -238,11 +239,10 @@ void add_mesh( struct matrix * polygons, char * filename ){
     exit(0);
   }
   while( fgets(line, sizeof(line), file) != NULL) {
-    line[strlen(line)-1]='\0';
     printf("%s\n",line);
-    strncpy(curr, line, strlen(line));
+    strcpy(curr, line);
     separated = parse_args(curr, " ");
-    //printf("%s, %s, %s, %s\n",separated[1],separated[2],separated[3],separated[4]);
+    printf("%s, %s, %s, %s\n",separated[1],separated[2],separated[3],separated[4]);
     if(!strncmp(separated[0], "v", strlen(separated[0]))){
       x = atof(separated[1]);
       y = atof(separated[2]);
@@ -281,6 +281,35 @@ void add_mesh( struct matrix * polygons, char * filename ){
             i++;
           }
       }
+    }
+    /*printf("%s",line);
+    strncpy(curr, line, strlen(line));
+    separated = strsep(&curr, " ");
+    if(!strncmp(separated, "v", strlen(separated))){
+      x = atof(strsep(&curr," "));
+      y = atof(strsep(&curr," "));
+      z = atof(strsep(&curr," "));
+      add_point(vertices,x,y,z);
+      printf("added %lf, %lf, %lf \n", x,y,z);
+    }
+    else if (!strncmp(separated, "f", strlen(separated))){
+      int start = atof(strsep(&curr, " "));
+      int v1 = atof(strsep(&curr, " "));
+      int v2;
+      while((v2 = atof(strsep(&curr, " "))) != NULL){
+        printf("here\n");
+          add_polygon(polygons, vertices->m[0][start],
+            vertices->m[1][start],
+            vertices->m[2][start],
+            vertices->m[0][v1],
+            vertices->m[1][v1],
+            vertices->m[2][v1],
+            vertices->m[0][v2],
+            vertices->m[1][v2],
+            vertices->m[2][v2]);
+            v1 = v2;
+          }
+      }
       /*printf("%s, %s, %s, %s\n", separated[1], separated[2], separated[3], separated[4]);
       int start = atof(separated[1]);
       int v1 = atof(separated[2]);
@@ -299,7 +328,50 @@ void add_mesh( struct matrix * polygons, char * filename ){
           v1 = v2;
           i++;
         }
-      }*/
+      }
+  }
+  fclose(file);
+}*/
+void add_mesh( struct matrix * polygons, char * filename ){
+  FILE *file;
+  file = fopen(filename, "r");
+  char line[255];
+  char *curr;
+  double x,y,z;
+  char *separated;
+  struct matrix * vertices = new_matrix(4,4);
+  if(file == NULL){
+    printf("Could not find file : %s", filename);
+    exit(0);
+  }
+  while( fgets(line, 256, file) != NULL) {
+    curr = malloc(256);
+    printf("%s\n",line);
+    strcpy(curr, line);
+    separated = strsep(&curr," ");
+    if(!strncmp(separated, "v", strlen(separated))){
+      x = atof(strsep(&curr,"  "));
+      y = atof(strsep(&curr,"  "));
+      z = atof(strsep(&curr,"  "));
+      add_point(vertices,x,y,z);
+    }
+    else if (!strncmp(separated, "f", strlen(separated))){
+      int start = atof(strsep(&curr,"  ")) - 1;
+      int v1 = atof(strsep(&curr,"  "))-1;
+      char * next;
+      while((next = strsep(&curr, " ")) != NULL){
+        int v2 = atof(next)-1;
+        add_polygon(polygons, vertices->m[0][start],
+            vertices->m[1][start],
+            vertices->m[2][start],
+            vertices->m[0][v1],
+            vertices->m[1][v1],
+            vertices->m[2][v1],
+            vertices->m[0][v2],
+            vertices->m[1][v2],
+            vertices->m[2][v2]);
+            v1 = v2;
+      }
     }
   }
   fclose(file);
@@ -326,17 +398,20 @@ void add_mesh( struct matrix * polygons, char * filename ){
     *(last+1) = 0;
   }
 
-  char ** parse_args( char * line , char * separator){
+  char ** parse_args( char * readin , char * separator){
     //This function separates a line with a provided separator
     char ** parsed_args = malloc(256);
     char * current;
+    char *num = malloc(256);
     int i = 0;
     //while you can continue to strsep, continue to strsep.
-    while((current = strsep(&line, separator))){
+    while((current = strsep(&readin, separator))){
       trim(current);
       parsed_args[i] = current;
       i++;
     }
+    sprintf(num, "%d", i);
+    parsed_args[i] = num;
     //when you have all the pieces, return the array of pieces.
     return parsed_args;
   }
